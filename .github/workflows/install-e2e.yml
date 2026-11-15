@@ -1,0 +1,222 @@
+name: Install E2E
+
+# Runs the one-command installer for real, against this commit, on a clean
+# machine: bootstrap script -> composer create-project -> dash:install ->
+# a served panel that the super admin can sign in to.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: install-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Not secrets: they belong to a database and an admin that exist for the
+  # length of one job.
+  GHOSTDASH_DB_PASSWORD: secret
+  GHOSTDASH_ADMIN_PASSWORD: E2e-Passphrase-2026
+  ADMIN_EMAIL: e2e@example.com
+
+jobs:
+  lint:
+    name: Lint bootstrap scripts
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: shellcheck install.sh
+        run: shellcheck install.sh
+
+      - name: PSScriptAnalyzer install.ps1
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+              Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          }
+
+          $findings = Invoke-ScriptAnalyzer -Path ./install.ps1 -Severity Error, Warning, Information
+          $findings | Format-Table -AutoSize RuleName, Severity, Line, Message
+
+          if ($findings) {
+              throw "PSScriptAnalyzer reported $(@($findings).Count) finding(s)."
+          }
+
+      - name: install.ps1 is plain ASCII
+        # Windows PowerShell 5.1 reads a script without a byte order mark as
+        # ANSI, so any other character would arrive garbled.
+        run: |
+          if LC_ALL=C grep -nP '[^\x00-\x7F]' install.ps1; then
+            echo "install.ps1 contains non-ASCII characters" >&2
+            exit 1
+          fi
+
+  install:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    needs: lint
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu / bash
+            os: ubuntu-latest
+            runner: bash
+          - name: Windows / PowerShell 7
+            os: windows-latest
+            runner: pwsh
+          - name: Windows / PowerShell 5.1
+            os: windows-latest
+            runner: powershell
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, ctype, curl, dom, fileinfo, intl, mbstring, openssl, pdo_mysql, tokenizer, xml, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # A service container would be simpler, but those do not exist on
+      # Windows runners. This action installs the same MySQL on both.
+      - name: Set up MySQL 8.4
+        uses: shogo82148/actions-setup-mysql@v1
+        with:
+          mysql-version: '8.4'
+          root-password: ${{ env.GHOSTDASH_DB_PASSWORD }}
+
+      - name: Run install.sh, piped as a user would
+        if: matrix.runner == 'bash'
+        shell: bash
+        working-directory: ${{ runner.temp }}
+        env:
+          GHOSTDASH_SOURCE: ${{ github.workspace }}
+        run: |
+          cat "$GITHUB_WORKSPACE/install.sh" | bash -s -- e2e-app \
+            --no-interaction \
+            --db-username=root \
+            --db-database=e2e_app \
+            --create-db \
+            --admin-name="E2E Admin" \
+            --admin-email="$ADMIN_EMAIL"
+
+      - name: Run install.ps1 through Invoke-Expression (PowerShell 7)
+        if: matrix.runner == 'pwsh'
+        shell: pwsh
+        working-directory: ${{ runner.temp }}
+        env:
+          GHOSTDASH_SOURCE: ${{ github.workspace }}
+          GHOSTDASH_APP: e2e-app
+          GHOSTDASH_ARGS: --no-interaction --db-username=root --db-database=e2e_app --create-db --admin-name="E2E Admin" --admin-email=e2e@example.com
+        run: |
+          Get-Content -Raw "$env:GITHUB_WORKSPACE\install.ps1" | Invoke-Expression
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run install.ps1 through Invoke-Expression (Windows PowerShell 5.1)
+        if: matrix.runner == 'powershell'
+        shell: powershell
+        working-directory: ${{ runner.temp }}
+        env:
+          GHOSTDASH_SOURCE: ${{ github.workspace }}
+          GHOSTDASH_APP: e2e-app
+          GHOSTDASH_ARGS: --no-interaction --db-username=root --db-database=e2e_app --create-db --admin-name="E2E Admin" --admin-email=e2e@example.com
+        run: |
+          Get-Content -Raw "$env:GITHUB_WORKSPACE\install.ps1" | Invoke-Expression
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # From here on the steps are the same everywhere. Git Bash is present
+      # on the Windows runners, so one script serves all three jobs.
+
+      - name: The installer left a complete project behind
+        shell: bash
+        working-directory: ${{ runner.temp }}/e2e-app
+        run: |
+          set -euo pipefail
+
+          test -f .env
+          test -f .env.testing
+          test -f vendor/autoload.php
+          test -f public/build/manifest.json
+          test -d .git
+
+          grep -q '^DB_DATABASE=e2e_app$' .env
+          grep -q '^DB_DATABASE=e2e_app_testing$' .env.testing
+
+          # Kit-only files must not travel into a project.
+          test ! -e install.sh
+          test ! -e install.ps1
+          test ! -e .github/workflows/install-e2e.yml
+
+      - name: dash:doctor reports no failures
+        shell: bash
+        working-directory: ${{ runner.temp }}/e2e-app
+        run: php artisan dash:doctor
+
+      - name: Running the installer again changes nothing
+        shell: bash
+        working-directory: ${{ runner.temp }}/e2e-app
+        run: |
+          set -euo pipefail
+
+          before=$(cat .env)
+          php artisan dash:install --no-interaction --skip-assets --no-git
+          test "$before" = "$(cat .env)"
+
+          admins=$(php artisan tinker --execute='echo App\Models\Admin::count();' | tr -d '[:space:]')
+          test "$admins" = "1"
+
+      - name: The panel is served and the super admin can sign in
+        shell: bash
+        working-directory: ${{ runner.temp }}/e2e-app
+        run: |
+          set -euo pipefail
+
+          php artisan serve --host=127.0.0.1 --port=8000 > serve.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+
+          for attempt in $(seq 1 60); do
+            if curl -fs -o /dev/null http://127.0.0.1:8000/up; then
+              break
+            fi
+            sleep 1
+          done
+
+          status=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/admin/login)
+
+          if [ "$status" != "200" ]; then
+            echo "/admin/login answered $status" >&2
+            cat serve.log >&2
+            tail -n 60 storage/logs/laravel.log >&2 || true
+            exit 1
+          fi
+
+          echo "ok    /admin/login answers 200"
+
+          php "$GITHUB_WORKSPACE/.github/scripts/assert-admin-sign-in.php" http://127.0.0.1:8000 admin "$ADMIN_EMAIL"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-e2e-${{ matrix.runner }}-logs
+          path: |
+            ${{ runner.temp }}/e2e-app/storage/logs/*.log
+            ${{ runner.temp }}/e2e-app/serve.log
+          if-no-files-found: ignore

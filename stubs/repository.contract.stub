@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ modelFqcn }};
+use Illuminate\Database\Eloquent\Builder;
+
+interface {{ contract }}
+{
+    /**
+     * @return Builder<{{ model }}>
+     */
+    public function query(): Builder;
+
+    public function find(int $id): ?{{ model }};
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function create(array $attributes): {{ model }};
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function update({{ model }} ${{ variable }}, array $attributes): {{ model }};
+
+    public function delete({{ model }} ${{ variable }}): void;
+}

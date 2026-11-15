@@ -1,0 +1,38 @@
+* text=auto eol=lf
+
+*.blade.php diff=html
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+*.php diff=php
+
+# Kit-only files: they bootstrap or test GhostDash itself and have no place
+# in a project created from it.
+/install.sh export-ignore
+/install.ps1 export-ignore
+/.github/workflows/install-e2e.yml export-ignore
+/CHANGELOG.md export-ignore
+
+# Local-only files. Git ignores them already; these lines are for Composer,
+# which copies a path repository (GHOSTDASH_SOURCE, used by CI and when
+# working on the kit) by these rules and not by .gitignore. Without them a
+# project created from a working copy would inherit its .env and vendor/.
+/.env export-ignore
+/.env.backup export-ignore
+/.env.production export-ignore
+/.env.testing export-ignore
+/auth.json export-ignore
+/vendor export-ignore
+/node_modules export-ignore
+/public/build export-ignore
+/public/hot export-ignore
+/public/storage export-ignore
+/public/css/filament export-ignore
+/public/js/filament export-ignore
+/public/fonts/filament export-ignore
+/storage/app/backups export-ignore
+/storage/app/backup-temp export-ignore
+/storage/logs/*.log export-ignore
+/storage/framework/views/*.php export-ignore
+/.phpunit.cache export-ignore
+/.phpunit.result.cache export-ignore

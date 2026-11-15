@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ modelFqcn }};
+use {{ contractFqcn }};
+use Illuminate\Database\Eloquent\Builder;
+
+final class {{ class }} implements {{ contract }}
+{
+    public function query(): Builder
+    {
+        return {{ model }}::query();
+    }
+
+    public function find(int $id): ?{{ model }}
+    {
+        return {{ model }}::query()->find($id);
+    }
+
+    public function create(array $attributes): {{ model }}
+    {
+        ${{ variable }} = new {{ model }};
+        ${{ variable }}->forceFill($attributes)->save();
+
+        return ${{ variable }}->refresh();
+    }
+
+    public function update({{ model }} ${{ variable }}, array $attributes): {{ model }}
+    {
+        ${{ variable }}->forceFill($attributes)->save();
+
+        return ${{ variable }};
+    }
+
+    public function delete({{ model }} ${{ variable }}): void
+    {
+        ${{ variable }}->delete();
+    }
+}

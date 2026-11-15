@@ -1,0 +1,38 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "declare_strict_types": true,
+        "strict_comparison": true,
+        "strict_param": true,
+        "void_return": true,
+        "modernize_strpos": true,
+        "no_useless_else": true,
+        "no_superfluous_elseif": true,
+        "self_static_accessor": true,
+        "protected_to_private": true,
+        "ordered_class_elements": {
+            "order": [
+                "use_trait",
+                "case",
+                "constant",
+                "property",
+                "construct",
+                "destruct",
+                "magic",
+                "phpunit",
+                "method_abstract",
+                "method_public_static",
+                "method_public",
+                "method_protected_static",
+                "method_protected",
+                "method_private_static",
+                "method_private"
+            ]
+        },
+        "global_namespace_import": {
+            "import_classes": true,
+            "import_constants": false,
+            "import_functions": false
+        }
+    }
+}

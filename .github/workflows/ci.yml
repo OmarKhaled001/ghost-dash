@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: ghostdash_testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psecret"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      # Real environment variables win over .env.testing, so the file only
+      # has to supply the non-database defaults.
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: ghostdash_testing
+      DB_USERNAME: root
+      DB_PASSWORD: secret
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: bcmath, ctype, curl, dom, fileinfo, intl, mbstring, openssl, pdo_mysql, tokenizer, xml, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install the MySQL client (mysqldump is needed by the backup tests)
+        run: mysqldump --version || (sudo apt-get update && sudo apt-get install -y mysql-client)
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare the testing environment
+        run: |
+          cp .env.testing.example .env.testing
+          php artisan key:generate --env=testing
+
+      - name: composer check
+        run: composer check
+
+      # Known vulnerabilities fail the build. Abandoned packages are only
+      # listed (config.audit.abandoned in composer.json).
+      - name: composer audit
+        run: composer audit
