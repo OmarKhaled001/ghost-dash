@@ -12,6 +12,7 @@
 /install.ps1 export-ignore
 /.github/workflows/install-e2e.yml export-ignore
 /CHANGELOG.md export-ignore
+/RELEASE_NOTES.md export-ignore
 
 # Local-only files. Git ignores them already; these lines are for Composer,
 # which copies a path repository (GHOSTDASH_SOURCE, used by CI and when
