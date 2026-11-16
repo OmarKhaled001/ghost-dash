@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Enums\CustomPermission;
 use App\Filament\Pages\Backups;
 use App\Filament\Pages\Health;
-use App\Filament\Pages\ManageGeneralSettings;
+use App\Filament\Pages\ManageSettings;
 use App\Filament\Resources\Activities\ActivityResource;
 use App\Filament\Resources\Admins\AdminResource;
 use App\Filament\Resources\Roles\RoleResource;
@@ -237,7 +237,7 @@ return [
             // "view" permission next to those would grant nothing.
             Backups::class,
             Health::class,
-            ManageGeneralSettings::class,
+            ManageSettings::class,
         ],
     ],
 

@@ -9,6 +9,7 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Support\InitialsAvatarProvider;
 use App\Http\Middleware\ApplyGeneralSettings;
 use App\Http\Middleware\EnsureAdminIsActive;
+use App\Settings\AppearanceSettings;
 use App\Settings\GeneralSettings;
 use App\Support\Locales;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -88,8 +89,10 @@ final class AdminPanelProvider extends PanelProvider
             ->brandName(fn (): string => resolve(GeneralSettings::class)->app_name)
             ->brandLogo(fn (): ?string => $this->publicUrl(resolve(GeneralSettings::class)->logo_path))
             ->favicon(fn (): ?string => $this->publicUrl(resolve(GeneralSettings::class)->favicon_path))
-            ->colors([
-                'primary' => Color::Indigo,
+            // Read when the panel boots for a request, so a change on the
+            // Appearance tab shows on the next page load.
+            ->colors(fn (): array => [
+                'primary' => resolve(AppearanceSettings::class)->primaryColor()->palette(),
                 'gray' => Color::Slate,
             ])
             // Plex Sans Arabic carries matching Latin and Arabic glyphs, so

@@ -119,9 +119,15 @@ final class ActivityPresenter
         $old = $activity->oldValues();
         $new = $activity->newValues();
 
+        // A settings change names its group; the labels live with its tab.
+        $group = $activity->properties?->get('group');
+        $labels = is_string($group) && $group !== '' ? "settings/{$group}.fields" : null;
+
         return collect(array_keys([...$old, ...$new]))
             ->map(fn (string $attribute): array => [
-                'label' => self::attribute($attribute),
+                'label' => $labels !== null && Lang::has("{$labels}.{$attribute}")
+                    ? __("{$labels}.{$attribute}")
+                    : self::attribute($attribute),
                 'old' => array_key_exists($attribute, $old) ? self::value($old[$attribute]) : '—',
                 'new' => array_key_exists($attribute, $new) ? self::value($new[$attribute]) : '—',
             ])

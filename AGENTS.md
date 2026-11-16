@@ -45,6 +45,14 @@ This application was created from the GhostDash starter kit. README.md describes
 - Image uploads take `->acceptedFileTypes(RasterImage::MIME_TYPES)` and a `->maxSize()`. Filament's `->image()` alone accepts SVG, which can carry script and would be served from this application's origin.
 - Keep Filament's random file names. Do not use `preserveFilenames()` on a local or public disk.
 
+## Settings
+
+- A settings group is a spatie/laravel-settings class in `app/Settings`, a settings migration in `database/settings`, and a `SettingsTab` in `app/Filament/Settings/Tabs`, which appears on the Settings page by itself. Create all of them with `php artisan make:settings-tab Name`.
+- Add a setting with a property, a new settings migration, and a field on the tab. Never edit a settings migration that has already run.
+- Settings are saved through `SettingsService`, which logs each change. Read them with `resolve(SomeSettings::class)`.
+- Expose a group to `GET /api/v1/settings` only through `PublicSettings::toPublicArray()`, listing each field on purpose.
+- Tab labels and fields are translated in `lang/{en,ar}/settings/<group>.php`.
+
 ## Text
 
 - Every string a person reads in the panel, an API response or an email goes through `__()` and has an entry in both `lang/en` and `lang/ar`. A test compares the two directories key by key.

@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }}\Filament\Settings\Tabs;
+
+use {{ namespace }}\Filament\Settings\SettingsTab;
+use {{ namespace }}\Settings\{{ name }}Settings;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Override;
+
+/**
+ * @extends SettingsTab<{{ name }}Settings>
+ */
+final class {{ name }}Tab extends SettingsTab
+{
+    public static function settings(): string
+    {
+        return {{ name }}Settings::class;
+    }
+
+    public function label(): string
+    {
+        return __('settings/{{ group }}.label');
+    }
+
+    #[Override]
+    public function sort(): int
+    {
+        return 100;
+    }
+
+    public function components(): array
+    {
+        return [
+            Section::make()
+                ->schema([
+                    TextInput::make('example')
+                        ->label(__('settings/{{ group }}.fields.example'))
+                        ->maxLength(255),
+                ]),
+        ];
+    }
+}

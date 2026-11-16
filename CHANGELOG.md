@@ -4,6 +4,20 @@ All notable changes to GhostDash are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added
+
+- A tabbed Settings page at `/admin/settings`, replacing the single General settings page. Tabs are discovered from `app/Filament/Settings/Tabs`, each backed by its own settings class, and may require a narrower permission than `manage_settings`.
+- New default tabs: Contact (email, phone, WhatsApp, address, map link), Social media (seven networks) and Appearance (the panel's primary colour).
+- `php artisan make:settings-tab Name`, which writes a settings class, its migration, the tab and both translation files.
+- `php artisan dash:seo` and `dash:install --seo`: an SEO tab (titles, description, sharing image, indexing, verification codes, Google Analytics and Tag Manager) and an `<x-seo>` component for page heads.
+- `GET /api/v1/settings`: the settings each group chooses to make public, for a separate frontend.
+- `SettingsService`, through which every settings change is saved and logged, one activity entry per group.
+
+### Changed
+
+- The contact email moved from the General group to the Contact tab (`contact.email`). A settings migration moves the stored value; run `php artisan migrate` when upgrading.
+- Settings translations moved to `lang/{en,ar}/settings/<group>.php`.
+
 ## [1.0.0] - 2026-11-15
 
 ### Added

@@ -167,29 +167,14 @@ return [
             'detached' => 'Removed',
             'file' => 'File',
             'only_database' => 'Database only',
+            'group' => 'Settings tab',
         ],
     ],
 
     'settings' => [
-        'title' => 'General settings',
-        'sections' => [
-            'identity' => 'Identity',
-            'regional' => 'Language and region',
-        ],
-        'fields' => [
-            'app_name' => 'Application name',
-            'logo' => 'Logo',
-            'favicon' => 'Favicon',
-            'default_locale' => 'Default language',
-            'timezone' => 'Time zone',
-            'contact_email' => 'Contact email',
-        ],
-        'hints' => [
-            'logo' => 'PNG, JPEG or WebP, up to 1 MB. Shown in place of the name.',
-            'favicon' => 'PNG, JPEG or WebP, up to 512 KB.',
-            'default_locale' => 'Used until someone picks a language themselves.',
-            'timezone' => 'Dates in the panel are shown in this time zone.',
-        ],
+        'title' => 'Settings',
+        'save' => 'Save changes',
+        'saved' => 'Saved',
     ],
 
     'backups' => [

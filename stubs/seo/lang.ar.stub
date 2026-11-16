@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'label' => 'تحسين محركات البحث',
+    'sections' => [
+        'search' => 'نتائج البحث',
+        'sharing' => 'المشاركة',
+        'indexing' => 'الأرشفة',
+        'tools' => 'التحقق والتحليلات',
+    ],
+    'fields' => [
+        'site_name' => 'اسم الموقع',
+        'title_separator' => 'فاصل العنوان',
+        'description' => 'الوصف الافتراضي',
+        'keywords' => 'الكلمات المفتاحية',
+        'og_image_path' => 'صورة المشاركة',
+        'twitter_handle' => 'حساب إكس (تويتر)',
+        'index' => 'السماح لمحركات البحث بأرشفة الموقع',
+        'follow' => 'السماح لمحركات البحث بتتبع الروابط',
+        'google_site_verification' => 'رمز Google Search Console',
+        'bing_site_verification' => 'رمز Bing Webmaster',
+        'google_analytics_id' => 'معرّف Google Analytics',
+        'google_tag_manager_id' => 'معرّف Google Tag Manager',
+    ],
+    'hints' => [
+        'site_name' => 'يظهر بعد عنوان كل صفحة. اتركه فارغًا لاستخدام اسم التطبيق.',
+        'description' => 'حتى 160 حرفًا، للصفحات التي لا تحدد وصفها بنفسها.',
+        'keywords' => 'مفصولة بفواصل. معظم محركات البحث تتجاهلها.',
+        'og_image_path' => 'تظهر عند مشاركة رابط. المقاس 1200 × 630 بكسل مناسب لكل المنصات. PNG أو JPEG أو WebP بحجم لا يتجاوز 2 ميغابايت.',
+        'index' => 'أوقفه في موقع التجربة حتى لا يظهر في نتائج البحث.',
+        'follow' => 'يسمح لمحركات البحث باكتشاف الصفحات عبر الروابط الموجودة في صفحاتك.',
+    ],
+];

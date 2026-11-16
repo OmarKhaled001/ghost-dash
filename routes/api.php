@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Auth\PasswordController;
 use App\Http\Controllers\Api\V1\Auth\ProfileController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,6 +25,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
+    // What the Settings page makes public (name, logo, contact details,
+    // social links, SEO): for a website or app built on this API.
+    Route::get('settings', [SettingsController::class, 'show'])
+        ->middleware('throttle:settings')
+        ->name('settings');
+
     Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('register', [RegistrationController::class, 'store'])
             ->middleware('throttle:auth.register')

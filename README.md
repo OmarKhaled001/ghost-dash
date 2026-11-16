@@ -25,6 +25,7 @@ It is a skeleton application, not a package. You create a project from it and th
 - [Composer scripts](#composer-scripts)
 - [Environment variables](#environment-variables)
 - [Admins, roles and permissions](#admins-roles-and-permissions)
+- [Settings](#settings)
 - [User API](#user-api)
 - [Scheduled tasks](#scheduled-tasks)
 - [Directory layout](#directory-layout)
@@ -151,7 +152,7 @@ Open `http://localhost:8000/admin` and sign in with the super admin you created.
 - Activity log: who changed what, with before/after values, for admins, users, roles, permission changes and sign-in events on both guards. Sensitive values are redacted before they are stored.
 - Backups: MySQL dump plus uploaded files, on a schedule, with a panel page to create, download and delete them.
 - Health checks with a panel page.
-- General settings page: app name, logo, favicon, default language, time zone, contact email.
+- A tabbed Settings page: General (name, logo, favicon, language, time zone), Contact, Social media and Appearance (the panel's primary colour). SEO is one command away, and adding a tab of your own takes one more. See [Settings](#settings).
 - Laravel Telescope, loaded only when `TELESCOPE_ENABLED=true`. It is open in the `local` environment; everywhere else only admins holding `view_telescope` can open it. Passwords, tokens and other sensitive values are masked in what it records, wherever they sit in a request or response.
 
 **User API**
@@ -160,7 +161,7 @@ Open `http://localhost:8000/admin` and sign in with the super admin you created.
 
 **Developer experience**
 
-- `make:service` and `make:repository` generators that follow the kit's conventions.
+- `make:service`, `make:repository` and `make:settings-tab` generators that follow the kit's conventions, and `dash:seo`.
 - Pest, Larastan, Pint and Rector wired into one `composer check`.
 - Two GitHub Actions workflows: `ci.yml` (`composer check` and `composer audit` on MySQL 8.4 with PHP 8.4 and 8.5) and `install-e2e.yml` (the one-command installer on Ubuntu and Windows). The second one tests the kit itself and is not copied into your project.
 - Laravel Boost with generated AI guidelines.
@@ -179,7 +180,7 @@ The installer is interactive by default, fully scriptable with options, and safe
 | 1 | App | Asks for the app name, URL and default language and writes them to `.env`. |
 | 2 | Database | Asks for the MySQL connection, writes it to `.env` and tests it. Explains the usual failures (server not running, wrong credentials, missing database) and asks again. Offers to create a missing database. |
 | 3 | Testing database | Creates `<database>_testing` and writes `.env.testing` with its own `APP_KEY`. |
-| 4 | Schema and access | Runs migrations, `storage:link` and `dash:sync-permissions`, and stores the default settings. |
+| 4 | Schema and access | Adds SEO first when asked (`--seo`, or yes to the question), then runs migrations, `storage:link` and `dash:sync-permissions`, and stores the default settings. |
 | 5 | Super admin | Creates the first super admin. Skipped when one already exists. |
 | 6 | Demo data | Optional sample admins and users. Only in the `local` environment. |
 | 7 | Assets | Runs `npm install` and `npm run build` when `public/build/manifest.json` is missing. |
@@ -204,6 +205,7 @@ The installer is interactive by default, fully scriptable with options, and safe
 | `--admin-email=` | Email of the first super admin. |
 | `--admin-password=` | Password of the first super admin. Prefer the `GHOSTDASH_ADMIN_PASSWORD` environment variable. |
 | `--demo` | Seed demo data. Refused outside the `local` environment. |
+| `--seo` | Add SEO (`php artisan dash:seo`). Interactive installs ask instead, defaulting to no. Skipped in production, where source files should arrive through a deployment. |
 | `--skip-assets` | Skip step 7. |
 | `--no-git` | Skip step 8. |
 | `--serve` | Start `composer dev` when the installer finishes. |
@@ -230,6 +232,8 @@ In the `production` environment with `--no-interaction`, the installer keeps the
 | `php artisan dash:doctor` | Checks the installation and prints pass, warn or fail per check. Exits with code 1 when any check fails. |
 | `php artisan make:service Billing/InvoiceService` | Creates a final, strictly typed service class in `app/Services`. |
 | `php artisan make:repository Invoice` | Creates `app/Repositories/Contracts/InvoiceRepository.php` (interface), `app/Repositories/Eloquent/EloquentInvoiceRepository.php` (implementation) and registers the binding in `RepositoryServiceProvider`. Use `--model=` when the model name differs. |
+| `php artisan make:settings-tab Shipping` | Creates a tab on the Settings page: `app/Settings/ShippingSettings.php`, `app/Filament/Settings/Tabs/ShippingTab.php`, a settings migration and `lang/{en,ar}/settings/shipping.php`. See [Settings](#settings). |
+| `php artisan dash:seo` | Adds SEO: a settings tab, its settings, an `<x-seo>` component for page heads, and the `seo` group in `GET /api/v1/settings`. Runs the settings migration unless `--no-migrate`. Safe to run again. Refused in production. |
 
 ### What `dash:doctor` checks
 
@@ -328,7 +332,7 @@ Roles and permissions belong to the `admin` guard. `super_admin` holds every per
 |---|---|
 | `view_telescope` | Opening Telescope |
 | `view_activity_log` | The activity log and record timelines |
-| `manage_settings` | The General settings page |
+| `manage_settings` | The Settings page. A tab can ask for a further permission on top. |
 | `manage_backups` | The Backups page: list, create, download, delete. An archive contains the whole database, password hashes included, so give this only to people you would trust with all of it, and consider `BACKUP_ARCHIVE_PASSWORD`. |
 | `view_health` | The Health page |
 
@@ -340,6 +344,55 @@ php artisan dash:sync-permissions
 ```
 
 Servers only ever run `dash:sync-permissions`, which touches the database and nothing else.
+
+## Settings
+
+The Settings page (`/admin/settings`, permission `manage_settings`) shows one tab per settings group. Every value is stored with [spatie/laravel-settings](https://github.com/spatie/laravel-settings), every change is written to the activity log with before and after values, and the tab is kept in the URL (`?tab=contact`).
+
+| Tab | Holds | Settings class |
+|---|---|---|
+| General | App name, logo, favicon, default language, time zone | `App\Settings\GeneralSettings` |
+| Contact | Email, phone, WhatsApp number, address, map link | `App\Settings\ContactSettings` |
+| Social media | Facebook, Instagram, X, LinkedIn, YouTube, TikTok, Snapchat | `App\Settings\SocialSettings` |
+| Appearance | The panel's primary colour | `App\Settings\AppearanceSettings` |
+| SEO (after `dash:seo`) | Site name, title separator, description, keywords, sharing image, X account, indexing, Search Console and Bing codes, Google Analytics and Tag Manager | `App\Settings\SeoSettings` |
+
+Read a value anywhere with the container: `resolve(ContactSettings::class)->phone`.
+
+### Adding a tab
+
+```bash
+php artisan make:settings-tab Shipping
+```
+
+That writes four things, then you run `php artisan migrate`:
+
+1. `app/Settings/ShippingSettings.php`: one public property per setting.
+2. A migration in `database/settings/` that adds each property with its default.
+3. `app/Filament/Settings/Tabs/ShippingTab.php`: the form fields, label, icon, position (`sort()`) and, optionally, a narrower `permission()`.
+4. `lang/en/settings/shipping.php` and `lang/ar/settings/shipping.php`. The Arabic file starts out in English.
+
+Nothing is registered by hand: every tab in `app/Filament/Settings/Tabs` appears on the page by itself. A tab that lives elsewhere, in a package for instance, goes in `config/ghostdash.php` under `settings.tabs`.
+
+Adding a setting to an existing tab is the same three edits: a property, a line in a new settings migration (`$this->migrator->add('shipping.free_above', 500)`), and a field in the tab.
+
+To make a group readable without signing in, implement `App\Settings\Contracts\PublicSettings` on its settings class. `toPublicArray()` decides exactly what leaves the server.
+
+### SEO
+
+```bash
+php artisan dash:seo
+```
+
+Adds the SEO tab and an `<x-seo>` component. In a Blade layout:
+
+```blade
+<head>
+    <x-seo title="Pricing" description="Plans for every team." />
+</head>
+```
+
+It writes the title (`Pricing | Acme`), description, keywords, robots, canonical link, Open Graph and X (Twitter) cards, the Search Console and Bing verification tags, and the Google Analytics or Tag Manager snippet, each only when it is filled in. Every attribute is optional (`title`, `description`, `image`, `canonical`, `type`) and falls back to the settings. A separate frontend reads the same values from `GET /api/v1/settings`.
 
 ## User API
 
@@ -359,8 +412,11 @@ Base path: `/api/v1`. Send `Accept: application/json`. Authenticated routes take
 | PUT | `/api/v1/auth/password` | token | 5 / minute per user | Change the password; revokes the other tokens |
 | POST | `/api/v1/auth/logout` | token | 30 / minute per user | Revoke the current token |
 | POST | `/api/v1/auth/logout-all` | token | 10 / minute per user | Revoke every token of the user |
+| GET | `/api/v1/settings` | none | 120 / minute per IP | The public settings: `general`, `contact`, `social`, `appearance`, and `seo` once added |
 
-Each endpoint has its own named rate limiter (`auth.register`, `auth.login`, and so on), defined in `app/Providers/ApiServiceProvider.php`.
+Each endpoint has its own named rate limiter (`auth.register`, `auth.login`, `settings`, and so on), defined in `app/Providers/ApiServiceProvider.php`.
+
+`GET /api/v1/settings` returns only what each settings class chooses to make public: file paths become full URLs, and empty social networks are left out.
 
 ### Tokens
 
@@ -462,6 +518,7 @@ app/
 ├── Filament/
 │   ├── Concerns/, Contracts/  Permission gate for pages that are not resources
 │   ├── Pages/                 Settings, Backups, Health, auth pages
+│   ├── Settings/              The settings tab base class; Tabs/ holds one class per tab
 │   ├── RelationManagers/      Activity timeline, reusable on any resource
 │   ├── Resources/             Admins, Users, Roles, Activities
 │   ├── Support/               Helpers shared by resources
@@ -482,14 +539,14 @@ app/
 │   ├── Contracts/             Interfaces
 │   └── Eloquent/              Eloquent implementations
 ├── Services/                  Business logic. Resources and controllers call these for writes.
-├── Settings/                  spatie/laravel-settings classes
+├── Settings/                  spatie/laravel-settings classes, one per tab
 └── Support/                   Small helpers (API responses, redaction of sensitive values, installer steps)
 config/ghostdash.php           Kit configuration
 database/settings/             Settings migrations
-lang/{en,ar}/                  Translations
+lang/{en,ar}/                  Translations; settings/ has one file per settings tab
 routes/api.php                 /api/v1 routes
 routes/console.php             Every scheduled task
-stubs/                         Stubs for make:service, make:repository and Laravel's own generators
+stubs/                         Stubs for make:service, make:repository, make:settings-tab, dash:seo and Laravel's own generators
 tests/
 ├── Arch/                      Architecture rules
 ├── Feature/, Unit/

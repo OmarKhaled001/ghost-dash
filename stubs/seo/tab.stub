@@ -1,0 +1,132 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }}\Filament\Settings\Tabs;
+
+use {{ namespace }}\Filament\Settings\SettingsTab;
+use {{ namespace }}\Filament\Support\RasterImage;
+use {{ namespace }}\Settings\SeoSettings;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Section;
+use Filament\Support\Icons\Heroicon;
+use Override;
+
+/**
+ * @extends SettingsTab<SeoSettings>
+ */
+final class SeoTab extends SettingsTab
+{
+    public static function settings(): string
+    {
+        return SeoSettings::class;
+    }
+
+    public function label(): string
+    {
+        return __('settings/seo.label');
+    }
+
+    #[Override]
+    public function icon(): Heroicon
+    {
+        return Heroicon::OutlinedMagnifyingGlass;
+    }
+
+    #[Override]
+    public function sort(): int
+    {
+        return 50;
+    }
+
+    public function components(): array
+    {
+        return [
+            Section::make(__('settings/seo.sections.search'))
+                ->columns(2)
+                ->schema([
+                    TextInput::make('site_name')
+                        ->label(__('settings/seo.fields.site_name'))
+                        ->helperText(__('settings/seo.hints.site_name'))
+                        ->maxLength(100),
+
+                    Select::make('title_separator')
+                        ->label(__('settings/seo.fields.title_separator'))
+                        ->options(['|' => '|', '-' => '-', '–' => '–', '·' => '·', '•' => '•', '/' => '/'])
+                        ->required()
+                        ->native(false),
+
+                    Textarea::make('description')
+                        ->label(__('settings/seo.fields.description'))
+                        ->helperText(__('settings/seo.hints.description'))
+                        ->rows(3)
+                        ->maxLength(160)
+                        ->columnSpanFull(),
+
+                    TextInput::make('keywords')
+                        ->label(__('settings/seo.fields.keywords'))
+                        ->helperText(__('settings/seo.hints.keywords'))
+                        ->maxLength(255)
+                        ->columnSpanFull(),
+                ]),
+
+            Section::make(__('settings/seo.sections.sharing'))
+                ->columns(2)
+                ->schema([
+                    FileUpload::make('og_image_path')
+                        ->label(__('settings/seo.fields.og_image_path'))
+                        ->helperText(__('settings/seo.hints.og_image_path'))
+                        ->image()
+                        ->acceptedFileTypes(RasterImage::MIME_TYPES)
+                        ->preventFilePathTampering(allowFilePathUsing: fn (string $file): bool => $file === $this->values()->og_image_path)
+                        ->disk('public')
+                        ->directory('seo')
+                        ->visibility('public')
+                        ->maxSize(2048),
+
+                    TextInput::make('twitter_handle')
+                        ->label(__('settings/seo.fields.twitter_handle'))
+                        ->placeholder('@yourname')
+                        ->regex('/^@[A-Za-z0-9_]{1,15}$/'),
+                ]),
+
+            Section::make(__('settings/seo.sections.indexing'))
+                ->columns(2)
+                ->schema([
+                    Toggle::make('index')
+                        ->label(__('settings/seo.fields.index'))
+                        ->helperText(__('settings/seo.hints.index')),
+
+                    Toggle::make('follow')
+                        ->label(__('settings/seo.fields.follow'))
+                        ->helperText(__('settings/seo.hints.follow')),
+                ]),
+
+            Section::make(__('settings/seo.sections.tools'))
+                ->columns(2)
+                ->schema([
+                    TextInput::make('google_site_verification')
+                        ->label(__('settings/seo.fields.google_site_verification'))
+                        ->regex('/^[A-Za-z0-9_-]{10,100}$/'),
+
+                    TextInput::make('bing_site_verification')
+                        ->label(__('settings/seo.fields.bing_site_verification'))
+                        ->regex('/^[A-Za-z0-9]{10,64}$/'),
+
+                    TextInput::make('google_analytics_id')
+                        ->label(__('settings/seo.fields.google_analytics_id'))
+                        ->placeholder('G-XXXXXXXXXX')
+                        ->regex('/^G-[A-Z0-9]{4,20}$/'),
+
+                    TextInput::make('google_tag_manager_id')
+                        ->label(__('settings/seo.fields.google_tag_manager_id'))
+                        ->placeholder('GTM-XXXXXXX')
+                        ->regex('/^GTM-[A-Z0-9]{4,12}$/'),
+                ]),
+        ];
+    }
+}

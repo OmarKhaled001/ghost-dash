@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }}\Settings;
+
+use {{ namespace }}\Settings\Contracts\PublicSettings;
+use Spatie\LaravelSettings\Settings;
+
+final class SeoSettings extends Settings implements PublicSettings
+{
+    /**
+     * Shown after each page title. Empty means the application name.
+     */
+    public ?string $site_name = null;
+
+    public string $title_separator;
+
+    public ?string $description = null;
+
+    public ?string $keywords = null;
+
+    public ?string $og_image_path = null;
+
+    public ?string $twitter_handle = null;
+
+    public bool $index;
+
+    public bool $follow;
+
+    public ?string $google_site_verification = null;
+
+    public ?string $bing_site_verification = null;
+
+    public ?string $google_analytics_id = null;
+
+    public ?string $google_tag_manager_id = null;
+
+    public static function group(): string
+    {
+        return 'seo';
+    }
+
+    public function siteName(): string
+    {
+        return $this->site_name !== null && $this->site_name !== '' ? $this->site_name : resolve(GeneralSettings::class)->app_name;
+    }
+
+    /**
+     * "Pricing | Acme" for a page, just "Acme" for the home page.
+     */
+    public function title(?string $page = null): string
+    {
+        return blank($page) ? $this->siteName() : "{$page} {$this->title_separator} {$this->siteName()}";
+    }
+
+    public function robots(): string
+    {
+        return ($this->index ? 'index' : 'noindex').', '.($this->follow ? 'follow' : 'nofollow');
+    }
+
+    public function imageUrl(): ?string
+    {
+        return GeneralSettings::publicUrl($this->og_image_path);
+    }
+
+    public function toPublicArray(): array
+    {
+        return [
+            'site_name' => $this->siteName(),
+            'title_separator' => $this->title_separator,
+            'description' => $this->description,
+            'keywords' => $this->keywords,
+            'image_url' => $this->imageUrl(),
+            'twitter_handle' => $this->twitter_handle,
+            'robots' => $this->robots(),
+            'google_site_verification' => $this->google_site_verification,
+            'bing_site_verification' => $this->bing_site_verification,
+            'google_analytics_id' => $this->google_analytics_id,
+            'google_tag_manager_id' => $this->google_tag_manager_id,
+        ];
+    }
+}

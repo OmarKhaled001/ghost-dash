@@ -58,6 +58,7 @@ use function Laravel\Prompts\text;
         {--admin-email= : Email of the first super admin}
         {--admin-password= : Password of the first super admin. Prefer GHOSTDASH_ADMIN_PASSWORD}
         {--demo : Seed demo data. Only allowed when APP_ENV=local}
+        {--seo : Add SEO (dash:seo): a settings tab and an <x-seo> component}
         {--skip-assets : Do not run npm install and npm run build}
         {--no-git : Do not initialise a git repository}
         {--serve : Start composer dev when the installer finishes}
@@ -420,6 +421,9 @@ final class DashInstallCommand extends Command
      */
     private function prepareSchema(AdminRepository $admins): bool
     {
+        // Before migrating, so its settings migration runs with the rest.
+        $this->addSeo();
+
         $this->runArtisan('migrate', ['--force' => true]);
 
         file_exists(public_path('storage'))
@@ -446,6 +450,35 @@ final class DashInstallCommand extends Command
         }
 
         return $firstInstall;
+    }
+
+    private function addSeo(): void
+    {
+        if (DashSeoCommand::installed()) {
+            $this->skipped('SEO is already set up');
+
+            return;
+        }
+
+        $wanted = $this->option('seo')
+            || ($this->input->isInteractive() && confirm('Add SEO settings (meta tags, sharing image, analytics)?', default: false));
+
+        if (! $wanted) {
+            $this->skipped('SEO not added (php artisan dash:seo adds it later)');
+
+            return;
+        }
+
+        // dash:seo writes source files, which a server should receive
+        // through a deployment instead.
+        if ($this->laravel->isProduction()) {
+            $this->skipped('SEO not added: in production, run dash:seo while developing and deploy the result');
+
+            return;
+        }
+
+        $this->runArtisan('dash:seo', ['--no-migrate' => true]);
+        $this->done('Added SEO');
     }
 
     private function createSuperAdmin(AdminRepository $admins, AdminService $adminService): void

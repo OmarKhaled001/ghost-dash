@@ -62,6 +62,10 @@ final class ApiServiceProvider extends ServiceProvider
         RateLimiter::for('auth.logout', fn (Request $request): Limit => $this->limit(30, 'logout|'.$this->user($request)));
 
         RateLimiter::for('auth.logout-all', fn (Request $request): Limit => $this->limit(10, 'logout-all|'.$this->user($request)));
+
+        // Public and read-only, so generous; it is keyed by IP like the
+        // other guest endpoints.
+        RateLimiter::for('settings', fn (Request $request): Limit => $this->limit(120, 'settings|'.$request->ip()));
     }
 
     private function limit(int $perMinute, string $key, bool $lockout = false): Limit

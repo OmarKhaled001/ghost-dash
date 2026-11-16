@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Filament\Settings\SettingsTab;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\AuthenticatedRequest;
 use App\Support\ApiResponse;
@@ -56,6 +57,8 @@ arch('application classes are final unless they are meant to be extended')
         Controller::class,
         // Base for the form requests of endpoints behind auth:sanctum.
         AuthenticatedRequest::class,
+        // Base for the tabs of the Settings page.
+        SettingsTab::class,
     ]);
 
 arch('controllers stay thin: no models, query builders or the DB facade')

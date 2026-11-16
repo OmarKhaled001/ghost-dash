@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Settings;
 
+use App\Settings\Contracts\PublicSettings;
+use Illuminate\Support\Facades\Storage;
 use Spatie\LaravelSettings\Settings;
 
-final class GeneralSettings extends Settings
+final class GeneralSettings extends Settings implements PublicSettings
 {
     public string $app_name;
 
@@ -21,10 +23,23 @@ final class GeneralSettings extends Settings
      */
     public string $timezone;
 
-    public ?string $contact_email = null;
-
     public static function group(): string
     {
         return 'general';
+    }
+
+    public static function publicUrl(?string $path): ?string
+    {
+        return $path === null ? null : Storage::disk('public')->url($path);
+    }
+
+    public function toPublicArray(): array
+    {
+        return [
+            'app_name' => $this->app_name,
+            'logo_url' => self::publicUrl($this->logo_path),
+            'favicon_url' => self::publicUrl($this->favicon_path),
+            'default_locale' => $this->default_locale,
+        ];
     }
 }

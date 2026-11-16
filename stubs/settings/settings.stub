@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }}\Settings;
+
+use Spatie\LaravelSettings\Settings;
+
+final class {{ name }}Settings extends Settings
+{
+    public ?string $example = null;
+
+    public static function group(): string
+    {
+        return '{{ group }}';
+    }
+}

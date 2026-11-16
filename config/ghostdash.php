@@ -60,6 +60,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Settings tabs
+    |--------------------------------------------------------------------------
+    |
+    | Every SettingsTab in app/Filament/Settings/Tabs appears on the Settings
+    | page by itself. List here only tabs that live somewhere else, such as
+    | in a package. `php artisan make:settings-tab Name` creates a new one.
+    |
+    */
+
+    'settings' => [
+        'tabs' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Activity Log
     |--------------------------------------------------------------------------
     |

@@ -334,6 +334,32 @@ Considered and left alone:
 - **`composer create-project omarkhaled001/ghost-dash` and the one-line commands, exactly as written.** They resolve the package through Packagist and want a stable tag; the tag and the Packagist submission are the owner's to do (see the TODOs). Everything around that lookup is verified: the repository is public, the bootstrap scripts are served from their `raw.githubusercontent.com` addresses, and the workflows run the rest through `GHOSTDASH_SOURCE`.
 - **macOS** and bash 3.2. `install.sh` avoids bash 4 features and passes shellcheck, but was only run on bash 5 (locally and on GitHub's Ubuntu runner).
 
+## Phase 10: settings tabs and SEO
+
+Asked for after 1.0.0: an option and a command that create SEO, more default settings, and an easy way to add a settings tab in code.
+
+**One Settings page with a tab per settings class.** The General settings page was a Filament `SettingsPage`, which is one form for one class. A tab per class keeps each class small and lets a project add groups without touching existing ones. The page is a plain Filament page that builds its tabs from `SettingsTabs`, fills each under its group key, and saves through `SettingsService` in one transaction, which also brings settings writes in line with the rule that every write goes through a service.
+
+**Tabs are discovered, not registered.** Every concrete `SettingsTab` in `app/Filament/Settings/Tabs` appears on the page; `config('ghostdash.settings.tabs')` takes tabs from elsewhere. That makes adding a tab a matter of files only, which is also what lets `make:settings-tab` and `dash:seo` generate a tab without editing any existing file.
+
+**`SettingsTab` is an abstract class rather than an interface.** It carries the defaults (icon, position, permission) and the two derived values every tab needs (`key()`, `values()`), so a tab states only what is particular to it. It is on the arch test's list of classes designed for extension.
+
+**A tab may ask for a further permission.** `manage_settings` opens the page; `permission()` hides a tab from admins without its permission, and a hidden tab is not in the form at all, so a value forged for it in the browser is never saved.
+
+**Each tab has its own translation file, `lang/<locale>/settings/<group>.php`.** A generator can create a file but cannot safely edit a PHP array in a shared one. The parity test now walks the language directories recursively. Activity diffs for settings take their field labels from the same file.
+
+**The contact email moved to the Contact tab.** It belongs with the phone and address. A settings migration renames `general.contact_email` to `contact.email`, keeping the stored value.
+
+**Appearance offers named palettes, not a colour picker.** Each Tailwind palette comes with the eleven shades Filament needs and readable contrast; a single picked colour would need both generated. The value is read when the panel boots for a request (`colors()` with a closure) and an unknown value falls back to indigo.
+
+**SEO is generated into the project, not shipped switched off.** "A command that creates SEO" reads as code the project then owns and edits: titles, extra tags, a sitemap later. `dash:seo` writes the settings class, its migration, the tab, an `<x-seo>` class component and both translations from `stubs/seo`, and migrates. It refuses to run in production: source files arrive on a server through a deployment. The component is a class with an inline view so that everything it writes lives under `app/`.
+
+**`<x-seo>` escapes everything and validates what lands in scripts.** Analytics and Tag Manager IDs are checked against their formats on the tab and passed to JavaScript with `@js`; every other value goes through Blade's escaping. Social links must start with `http://` or `https://`, so a `javascript:` link cannot be stored for a website to render.
+
+**`GET /api/v1/settings` exposes only what a settings class lists.** A settings class opts in by implementing `PublicSettings`, and `toPublicArray()` names each field: file paths become URLs, the time zone stays private. The endpoint takes no token because a website needs the values before anyone signs in; it is limited to 120 requests a minute per IP.
+
+**The kit's tests keep passing after a project adds tabs.** They check that the built-in tabs come first and in order and that every file in the directory is found, rather than an exact list. The test that runs the generated SEO code skips itself in a project where `dash:seo` has already run, because the generated classes are then the real ones. Verified by installing a project with `--seo`, adding a tab with `make:settings-tab`, and running that project's `composer check`.
+
 ## Deviations from the brief
 
 | Brief | What the kit does | Why |

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Settings\GeneralSettings;
 use BezhanSalleh\LanguageSwitch\Http\Livewire\LanguageSwitchComponent;
 use BezhanSalleh\LanguageSwitch\LanguageSwitch;
+use Symfony\Component\Finder\Finder;
 
 use function Pest\Laravel\get;
 use function Pest\Laravel\withCookie;
@@ -110,8 +111,14 @@ it('has every admin translation key in both languages', function (): void {
         return $found;
     };
 
-    foreach (glob(lang_path('en/*.php')) as $file) {
-        $name = basename($file);
+    // Recursive: settings tabs keep their strings in lang/<locale>/settings/.
+    $english = Finder::create()->files()->in(lang_path('en'))->name('*.php');
+
+    expect(iterator_count($english))->toBeGreaterThan(0);
+
+    foreach ($english as $found) {
+        $file = $found->getPathname();
+        $name = $found->getRelativePathname();
         $arabic = lang_path('ar/'.$name);
 
         expect(file_exists($arabic))->toBeTrue("lang/ar/{$name} is missing");
