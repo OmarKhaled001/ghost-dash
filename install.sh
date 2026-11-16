@@ -22,6 +22,7 @@
 set -euo pipefail
 
 PACKAGE="omarkhaled001/ghost-dash"
+REPOSITORY="https://github.com/omarkhaled001/ghost-dash"
 PHP_SERIES="8.4"
 NODE_MINIMUM=22
 EXTENSIONS="bcmath ctype curl dom fileinfo intl mbstring openssl pdo_mysql tokenizer xml zip"
@@ -401,6 +402,49 @@ describe_version() {
     fi
 }
 
+# Whether Packagist lists the package. Only a definite "not found" counts:
+# when Packagist cannot be reached, Composer is left to report that itself.
+on_packagist() {
+    command -v curl >/dev/null 2>&1 || return 0
+
+    status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "https://repo.packagist.org/p2/${PACKAGE}.json" 2>/dev/null) || status=""
+
+    [ "$status" != "404" ]
+}
+
+# The newest release tag in the GitHub repository, such as v1.2.0.
+latest_tag() {
+    git ls-remote --tags --refs "${REPOSITORY}.git" 2>/dev/null \
+        | sed 's#.*refs/tags/##' \
+        | grep -E '^v?[0-9]+(\.[0-9]+)*$' \
+        | awk -F. '{ v = $0; sub(/^v/, "", v); split(v, n, "."); printf "%010d%010d%010d %s\n", n[1], n[2], n[3], $0 }' \
+        | sort | tail -n 1 | cut -d' ' -f2
+}
+
+# Describes one release of the GitHub repository as a Composer repository
+# in a temporary file, and prints its path. GitHub's archive of a tag
+# leaves out the same kit-only files as a Packagist download.
+github_repository_file() {
+    ref="${GHOSTDASH_VERSION:-}"
+
+    if [ -z "$ref" ]; then
+        ref=$(latest_tag) || ref=""
+        [ -n "$ref" ] || die "Could not find a release of ${PACKAGE} on ${REPOSITORY}."
+    fi
+
+    case "$ref" in
+        dev-*) version="$ref"; archive="${REPOSITORY}/archive/refs/heads/${ref#dev-}.zip" ;;
+        *) version="$ref"; archive="${REPOSITORY}/archive/refs/tags/${ref}.zip" ;;
+    esac
+
+    directory=$(mktemp -d 2>/dev/null || mktemp -d -t ghostdash)
+    printf '{"packages":{"%s":{"%s":{"name":"%s","version":"%s","type":"project","dist":{"type":"zip","url":"%s"}}}}}\n' \
+        "$PACKAGE" "$version" "$PACKAGE" "$version" "$archive" > "${directory}/packages.json"
+
+    GITHUB_VERSION="$version"
+    GITHUB_REPOSITORY_FILE="${directory}/packages.json"
+}
+
 # --- main -------------------------------------------------------------------
 
 main() {
@@ -471,6 +515,13 @@ main() {
         escaped=$(printf '%s' "$source_path" | sed 's/\\/\\\\/g; s/"/\\"/g')
         # A copy, not a symlink: the result must be a project of its own.
         command+=(--repository "{\"type\":\"path\",\"url\":\"${escaped}\",\"options\":{\"symlink\":false}}" --stability dev)
+    elif ! on_packagist; then
+        github_repository_file
+        say "${DIM}Packagist does not list ${PACKAGE} yet, so ${GITHUB_VERSION} is installed from ${REPOSITORY}.${RESET}"
+        command+=("$GITHUB_VERSION" --repository "$GITHUB_REPOSITORY_FILE")
+        case "$GITHUB_VERSION" in
+            dev-*) command+=(--stability dev) ;;
+        esac
     elif [ -n "${GHOSTDASH_VERSION:-}" ]; then
         command+=("$GHOSTDASH_VERSION")
     fi
