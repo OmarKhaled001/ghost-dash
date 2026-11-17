@@ -23,6 +23,8 @@ final class GeneralSettings extends Settings implements PublicSettings
      */
     public string $timezone;
 
+    public ?string $contact_email = null;
+
     public static function group(): string
     {
         return 'general';
@@ -40,6 +42,7 @@ final class GeneralSettings extends Settings implements PublicSettings
             'logo_url' => self::publicUrl($this->logo_path),
             'favicon_url' => self::publicUrl($this->favicon_path),
             'default_locale' => $this->default_locale,
+            'contact_email' => $this->contact_email,
         ];
     }
 }

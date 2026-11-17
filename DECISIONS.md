@@ -360,6 +360,34 @@ Asked for after 1.0.0: an option and a command that create SEO, more default set
 
 **The kit's tests keep passing after a project adds tabs.** They check that the built-in tabs come first and in order and that every file in the directory is found, rather than an exact list. The test that runs the generated SEO code skips itself in a project where `dash:seo` has already run, because the generated classes are then the real ones. Verified by installing a project with `--seo`, adding a tab with `make:settings-tab`, and running that project's `composer check`.
 
+## Phase 11: SEO as a resource; Email and Socialite tabs
+
+Asked for next: SEO as a separate resource, per page and for the site, and settings tabs for Appearance, Email with a test, Socialite and General.
+
+**SEO is a module of its own, shipped with the kit and switched off.** Per-page SEO is a table with a Filament resource, policy, repository and service like any other; site-wide SEO is a settings class with its own page in the same SEO menu. That supersedes Phase 10's generated SEO tab. Generated code could not have been tested by the kit's own suite the way shipped code is, and a resource is far more code to generate. "An option that creates SEO" is kept as a switch: `GHOSTDASH_SEO`, set by `dash:seo` or `dash:install --seo`. Off, the resource and page refuse access and leave the menu, `<x-seo>` renders nothing and the API answers 404. The tables exist either way, so switching on needs no migration. The test suite runs with it on (phpunit.xml), so the resource and page are covered by the authorization tests that discover every page, and separate tests cover it switched off.
+
+**Pages are identified by path.** A path is what both a Blade view (`request()->path()`) and a separate frontend know about a page; route names would serve only the former. Paths are normalised before they are stored or looked up, and uniqueness is checked on the normalised form.
+
+**Page values fall back field by field to the site's.** An empty field means "like the site", including index and follow, which are three-state (yes, no, inherit).
+
+**`manage_seo` is a custom permission for Site SEO; pages use Shield's resource permissions.** The same split as Settings versus a resource.
+
+**Contact and Social media tabs were removed.** They were added in Phase 10, never released, and are not in the requested list. A settings migration moves the contact email back to General, where it is again, and drops the others.
+
+**Email settings apply when the mailer is first built, not at boot.** `resolving('mail.manager')` reads them, which covers web requests, queue workers and commands without touching the database for processes that send no mail, and without failing during an install when there is no database yet. Off (the default), `.env` stays in charge. A long-running worker needs `queue:restart` to see a change, as with any configuration.
+
+**The test email uses the values in the form, saved or not.** Trying new SMTP settings before they replace working ones is the point of the button. The mail configuration is restored and the mailers rebuilt afterwards, success or failure.
+
+**Secrets never reach the browser.** A tab lists its secrets; the page leaves them out of the form, an empty field keeps the stored value, and the field is emptied again after saving. They are also stored encrypted (spatie/laravel-settings `encrypted()`) and masked in the activity log by `SensitiveData`, which already matched `password` and `secret`.
+
+**Social sign-in is token-based, for the API's end users.** The kit's users sign in through a separate frontend, so the frontend runs the provider's flow and sends the access token; the server asks the provider whom it belongs to (`userFromToken`). No redirect URLs, sessions or state to configure. Admins do not sign in this way: the panel keeps passwords with MFA.
+
+**laravel/socialite was added.** Asked for by name. 5.32 requires `illuminate/* ^12|^13` and PHP ^8.2, which the matrix satisfies; `composer audit` reports nothing.
+
+**An existing account is joined only on an address the provider vouches for.** Otherwise anyone could open a provider account under somebody else's address and sign in as them. Google and LinkedIn report `email_verified` per address; GitHub (primary verified address) and Facebook only return confirmed addresses; X never says, so it never joins an existing account. The same rule decides whether a new account's address counts as verified.
+
+**Providers are enabled only with both credentials.** The switch alone could advertise a provider that fails on every attempt; `GET /api/v1/settings` lists only usable ones.
+
 ## Deviations from the brief
 
 | Brief | What the kit does | Why |
@@ -372,6 +400,7 @@ Asked for after 1.0.0: an option and a command that create SEO, more default set
 | Every user-facing string translated | Command-line output is English only | Installer and doctor output is read by developers and pasted into issues |
 | Environment variables as listed | Also `TRUSTED_PROXIES`, `TRUSTED_HOSTS`, `BACKUP_ARCHIVE_PASSWORD`, `HEALTH_NOTIFICATIONS_ENABLED`, `HEALTH_TO_ADDRESS` | See above and Phase 6 |
 | `dash:doctor` checks as listed | One more: host names | A wrong `APP_URL` outside local now means a 400 for everyone, and needs to be easy to diagnose |
+| Packages as listed | Also laravel/socialite | Social sign-in was asked for by name |
 | Guard rails as listed | Two more: no assigning roles beyond your own permissions, no managing admins with more access | Without them `update:admin` was a path to nearly every permission |
 
 ## Known TODOs

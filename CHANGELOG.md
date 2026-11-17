@@ -7,16 +7,18 @@ All notable changes to GhostDash are recorded here. The format follows [Keep a C
 ### Added
 
 - A tabbed Settings page at `/admin/settings`, replacing the single General settings page. Tabs are discovered from `app/Filament/Settings/Tabs`, each backed by its own settings class, and may require a narrower permission than `manage_settings`.
-- New default tabs: Contact (email, phone, WhatsApp, address, map link), Social media (seven networks) and Appearance (the panel's primary colour).
+- Settings tabs: General, Appearance (the panel's primary colour), Email (your own SMTP server instead of `.env`, with a test send of unsaved values) and Socialite (Google, Facebook, GitHub, X and LinkedIn credentials).
+- Secret settings (the SMTP password, client secrets) are stored encrypted, never sent to the browser, and kept when their field is left empty.
 - `php artisan make:settings-tab Name`, which writes a settings class, its migration, the tab and both translation files.
-- `php artisan dash:seo` and `dash:install --seo`: an SEO tab (titles, description, sharing image, indexing, verification codes, Google Analytics and Tag Manager) and an `<x-seo>` component for page heads.
-- `GET /api/v1/settings`: the settings each group chooses to make public, for a separate frontend.
+- SEO as its own module, off until `php artisan dash:seo` or `dash:install --seo`: a Site SEO page (`manage_seo`) and a resource for SEO per page, an `<x-seo>` component that resolves the current path, and `GET /api/v1/seo?path=`.
+- `POST /api/v1/auth/social/{provider}`: sign in or sign up with a provider's access token, through laravel/socialite. Existing accounts are joined only on a provider-confirmed address.
+- `GET /api/v1/settings`: the settings each group chooses to make public, including which social sign-in providers are ready.
 - `SettingsService`, through which every settings change is saved and logged, one activity entry per group.
 
 ### Changed
 
-- The contact email moved from the General group to the Contact tab (`contact.email`). A settings migration moves the stored value; run `php artisan migrate` when upgrading.
 - Settings translations moved to `lang/{en,ar}/settings/<group>.php`.
+- Run `php artisan migrate` when upgrading: the new tabs and SEO bring settings migrations and two tables (`seo_pages`, `social_accounts`).
 
 ## [1.0.0] - 2026-11-15
 

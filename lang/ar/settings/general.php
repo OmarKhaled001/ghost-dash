@@ -13,6 +13,7 @@ return [
         'logo_path' => 'الشعار',
         'favicon_path' => 'أيقونة الموقع',
         'default_locale' => 'اللغة الافتراضية',
+        'contact_email' => 'بريد التواصل',
         'timezone' => 'المنطقة الزمنية',
     ],
     'hints' => [

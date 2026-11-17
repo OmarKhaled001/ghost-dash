@@ -58,7 +58,7 @@ use function Laravel\Prompts\text;
         {--admin-email= : Email of the first super admin}
         {--admin-password= : Password of the first super admin. Prefer GHOSTDASH_ADMIN_PASSWORD}
         {--demo : Seed demo data. Only allowed when APP_ENV=local}
-        {--seo : Add SEO (dash:seo): a settings tab and an <x-seo> component}
+        {--seo : Switch on SEO: site-wide and per page, <x-seo> and GET /api/v1/seo}
         {--skip-assets : Do not run npm install and npm run build}
         {--no-git : Do not initialise a git repository}
         {--serve : Start composer dev when the installer finishes}
@@ -93,6 +93,7 @@ final class DashInstallCommand extends Command
 
             $this->heading(1, 'Application');
             $this->configureApplication();
+            $this->addSeo();
 
             $this->heading(2, 'Database');
             $database = $this->configureDatabase();
@@ -421,9 +422,6 @@ final class DashInstallCommand extends Command
      */
     private function prepareSchema(AdminRepository $admins): bool
     {
-        // Before migrating, so its settings migration runs with the rest.
-        $this->addSeo();
-
         $this->runArtisan('migrate', ['--force' => true]);
 
         file_exists(public_path('storage'))
@@ -454,31 +452,31 @@ final class DashInstallCommand extends Command
 
     private function addSeo(): void
     {
-        if (DashSeoCommand::installed()) {
-            $this->skipped('SEO is already set up');
+        if (config('ghostdash.seo.enabled')) {
+            $this->skipped('SEO is on');
+
+            return;
+        }
+
+        if ($this->unattendedProduction) {
+            $this->skipped('SEO left as configured (set GHOSTDASH_SEO=true on the server to switch it on)');
 
             return;
         }
 
         $wanted = $this->option('seo')
-            || ($this->input->isInteractive() && confirm('Add SEO settings (meta tags, sharing image, analytics)?', default: false));
+            || ($this->input->isInteractive() && confirm('Switch on SEO (site-wide and per page)?', default: false));
 
         if (! $wanted) {
-            $this->skipped('SEO not added (php artisan dash:seo adds it later)');
+            $this->skipped('SEO is off (php artisan dash:seo switches it on later)');
 
             return;
         }
 
-        // dash:seo writes source files, which a server should receive
-        // through a deployment instead.
-        if ($this->laravel->isProduction()) {
-            $this->skipped('SEO not added: in production, run dash:seo while developing and deploy the result');
+        $this->env->set(['GHOSTDASH_SEO' => 'true']);
+        config(['ghostdash.seo.enabled' => true]);
 
-            return;
-        }
-
-        $this->runArtisan('dash:seo', ['--no-migrate' => true]);
-        $this->done('Added SEO');
+        $this->done('Switched on SEO');
     }
 
     private function createSuperAdmin(AdminRepository $admins, AdminService $adminService): void

@@ -93,6 +93,7 @@ return [
     'permissions' => [
         'view_telescope' => 'Open Telescope',
         'view_activity_log' => 'View the activity log',
+        'manage_seo' => 'Manage SEO',
         'manage_settings' => 'Manage settings',
         'manage_backups' => 'Manage backups',
         'view_health' => 'View health checks',
@@ -138,6 +139,7 @@ return [
             'authentication' => 'Authentication',
             'settings' => 'Settings',
             'backups' => 'Backups',
+            'seo' => 'SEO',
         ],
         'events' => [
             'created' => 'Created',

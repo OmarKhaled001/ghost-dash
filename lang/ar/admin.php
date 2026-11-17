@@ -93,6 +93,7 @@ return [
     'permissions' => [
         'view_telescope' => 'فتح Telescope',
         'view_activity_log' => 'عرض سجل النشاط',
+        'manage_seo' => 'إدارة تحسين محركات البحث',
         'manage_settings' => 'إدارة الإعدادات',
         'manage_backups' => 'إدارة النسخ الاحتياطية',
         'view_health' => 'عرض فحوصات السلامة',
@@ -138,6 +139,7 @@ return [
             'authentication' => 'المصادقة',
             'settings' => 'الإعدادات',
             'backups' => 'النسخ الاحتياطية',
+            'seo' => 'تحسين محركات البحث',
         ],
         'events' => [
             'created' => 'إنشاء',

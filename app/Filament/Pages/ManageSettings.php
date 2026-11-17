@@ -76,11 +76,7 @@ final class ManageSettings extends Page implements GatedByPermission
 
     public function mount(): void
     {
-        $this->form->fill(
-            $this->tabs()
-                ->mapWithKeys(fn (SettingsTab $tab): array => [$tab->key() => $tab->values()->toArray()])
-                ->all(),
-        );
+        $this->fillForm();
     }
 
     public function form(Schema $schema): Schema
@@ -125,17 +121,29 @@ final class ManageSettings extends Page implements GatedByPermission
 
         /** @var array<class-string<Settings>, array<string, mixed>> $changes */
         $changes = $this->tabs()
-            ->mapWithKeys(fn (SettingsTab $tab): array => [$tab::settings() => (array) ($state[$tab->key()] ?? [])])
+            ->mapWithKeys(fn (SettingsTab $tab): array => [$tab::settings() => $tab->valuesToSave((array) ($state[$tab->key()] ?? []))])
             ->all();
 
         $settings->update($changes);
 
+        // Reloaded from what was stored, which also empties the secret
+        // fields again instead of leaving a typed password in the page.
+        $this->fillForm();
         $this->rememberData();
 
         Notification::make()
             ->success()
             ->title(__('admin.settings.saved'))
             ->send();
+    }
+
+    private function fillForm(): void
+    {
+        $this->form->fill(
+            $this->tabs()
+                ->mapWithKeys(fn (SettingsTab $tab): array => [$tab->key() => $tab->formValues()])
+                ->all(),
+        );
     }
 
     /**

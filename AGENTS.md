@@ -52,6 +52,12 @@ This application was created from the GhostDash starter kit. README.md describes
 - Settings are saved through `SettingsService`, which logs each change. Read them with `resolve(SomeSettings::class)`.
 - Expose a group to `GET /api/v1/settings` only through `PublicSettings::toPublicArray()`, listing each field on purpose.
 - Tab labels and fields are translated in `lang/{en,ar}/settings/<group>.php`.
+- A credential in a settings group goes in the settings class's `encrypted()` and the tab's `secrets()`, so it is stored encrypted and never sent to the browser.
+
+## SEO
+
+- SEO is switched on by `GHOSTDASH_SEO` (`php artisan dash:seo`). Anything new for SEO checks `SeoService::enabled()`.
+- Resolve a page's SEO with `SeoService::resolve($path)`, never by reading `SeoPage` and `SeoSettings` yourself: it normalises the path and applies the fallbacks.
 
 ## Text
 

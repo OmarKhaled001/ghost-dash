@@ -6,6 +6,7 @@ use App\Enums\CustomPermission;
 use App\Filament\Pages\Backups;
 use App\Filament\Pages\Health;
 use App\Filament\Pages\ManageSettings;
+use App\Filament\Pages\ManageSiteSeo;
 use App\Filament\Resources\Activities\ActivityResource;
 use App\Filament\Resources\Admins\AdminResource;
 use App\Filament\Resources\Roles\RoleResource;
@@ -238,6 +239,7 @@ return [
             Backups::class,
             Health::class,
             ManageSettings::class,
+            ManageSiteSeo::class,
         ],
     ],
 
@@ -281,6 +283,7 @@ return [
         CustomPermission::ManageSettings->value => 'Manage Settings',
         CustomPermission::ManageBackups->value => 'Manage Backups',
         CustomPermission::ViewHealth->value => 'View Health',
+        CustomPermission::ManageSeo->value => 'Manage SEO',
     ],
 
     /*

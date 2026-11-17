@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Repositories\Contracts\AdminRepository;
+use App\Repositories\Contracts\SeoPageRepository;
 use App\Repositories\Contracts\UserRepository;
 use App\Repositories\Eloquent\EloquentAdminRepository;
+use App\Repositories\Eloquent\EloquentSeoPageRepository;
 use App\Repositories\Eloquent\EloquentUserRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,5 +23,6 @@ final class RepositoryServiceProvider extends ServiceProvider
     public array $bindings = [
         AdminRepository::class => EloquentAdminRepository::class,
         UserRepository::class => EloquentUserRepository::class,
+        SeoPageRepository::class => EloquentSeoPageRepository::class,
     ];
 }

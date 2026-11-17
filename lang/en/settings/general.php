@@ -13,6 +13,7 @@ return [
         'logo_path' => 'Logo',
         'favicon_path' => 'Favicon',
         'default_locale' => 'Default language',
+        'contact_email' => 'Contact email',
         'timezone' => 'Time zone',
     ],
     'hints' => [

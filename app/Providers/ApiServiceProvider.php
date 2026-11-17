@@ -43,6 +43,8 @@ final class ApiServiceProvider extends ServiceProvider
             $this->limit(20, 'login|'.$request->ip(), lockout: true),
         ]);
 
+        RateLimiter::for('auth.social', fn (Request $request): Limit => $this->limit(10, 'social|'.$request->ip()));
+
         RateLimiter::for('auth.forgot-password', fn (Request $request): array => [
             $this->limit(3, 'forgot-password|'.$this->email($request).'|'.$request->ip()),
             $this->limit(10, 'forgot-password|'.$request->ip()),
@@ -66,6 +68,8 @@ final class ApiServiceProvider extends ServiceProvider
         // Public and read-only, so generous; it is keyed by IP like the
         // other guest endpoints.
         RateLimiter::for('settings', fn (Request $request): Limit => $this->limit(120, 'settings|'.$request->ip()));
+
+        RateLimiter::for('seo', fn (Request $request): Limit => $this->limit(120, 'seo|'.$request->ip()));
     }
 
     private function limit(int $perMinute, string $key, bool $lockout = false): Limit

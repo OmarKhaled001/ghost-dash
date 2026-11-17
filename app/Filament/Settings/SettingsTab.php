@@ -57,6 +57,46 @@ abstract class SettingsTab
     }
 
     /**
+     * Properties that never travel to the browser: the form starts empty for
+     * them, and leaving one empty keeps what is stored. Declare the same
+     * properties in the settings class's encrypted() so they are stored
+     * encrypted as well.
+     *
+     * @return list<string>
+     */
+    public function secrets(): array
+    {
+        return [];
+    }
+
+    /**
+     * The values the form starts with.
+     *
+     * @return array<string, mixed>
+     */
+    final public function formValues(): array
+    {
+        return array_diff_key($this->values()->toArray(), array_flip($this->secrets()));
+    }
+
+    /**
+     * The submitted values to store: an empty secret means "unchanged".
+     *
+     * @param  array<string, mixed>  $state
+     * @return array<string, mixed>
+     */
+    final public function valuesToSave(array $state): array
+    {
+        foreach ($this->secrets() as $secret) {
+            if (blank($state[$secret] ?? null)) {
+                unset($state[$secret]);
+            }
+        }
+
+        return $state;
+    }
+
+    /**
      * Also the tab's name in the URL (?tab=general) and the key its values
      * sit under in the form.
      */

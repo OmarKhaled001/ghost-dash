@@ -9,6 +9,7 @@ use App\Enums\AuthActivity;
 use App\Models\Activity;
 use App\Models\Admin;
 use App\Models\Role;
+use App\Models\SeoPage;
 use App\Models\User;
 use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
@@ -91,6 +92,7 @@ final class ActivityPresenter
             Admin::class => Str::ucfirst(__('admin.admins.label')),
             User::class => Str::ucfirst(__('admin.users.label')),
             Role::class => Str::ucfirst(__('filament-shield::filament-shield.resource.label.role')),
+            SeoPage::class => Str::ucfirst(__('seo.pages.label')).' (SEO)',
             default => Str::headline(class_basename($class)),
         };
     }
@@ -119,15 +121,28 @@ final class ActivityPresenter
         $old = $activity->oldValues();
         $new = $activity->newValues();
 
-        // A settings change names its group; the labels live with its tab.
+        // A settings change names its group, whose labels live with its tab
+        // or its own page; a model's live in the file named after its log.
         $group = $activity->properties?->get('group');
-        $labels = is_string($group) && $group !== '' ? "settings/{$group}.fields" : null;
+        $groups = array_filter([
+            is_string($group) && $group !== '' ? "settings/{$group}.fields" : null,
+            is_string($group) && $group !== '' ? "{$group}.fields" : null,
+            filled($activity->log_name) ? "{$activity->log_name}.fields" : null,
+        ]);
+
+        $label = function (string $attribute) use ($groups): string {
+            foreach ($groups as $labels) {
+                if (Lang::has("{$labels}.{$attribute}")) {
+                    return __("{$labels}.{$attribute}");
+                }
+            }
+
+            return self::attribute($attribute);
+        };
 
         return collect(array_keys([...$old, ...$new]))
             ->map(fn (string $attribute): array => [
-                'label' => $labels !== null && Lang::has("{$labels}.{$attribute}")
-                    ? __("{$labels}.{$attribute}")
-                    : self::attribute($attribute),
+                'label' => $label($attribute),
                 'old' => array_key_exists($attribute, $old) ? self::value($old[$attribute]) : '—',
                 'new' => array_key_exists($attribute, $new) ? self::value($new[$attribute]) : '—',
             ])

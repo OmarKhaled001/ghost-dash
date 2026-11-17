@@ -37,7 +37,7 @@ final class AppearanceTab extends SettingsTab
     #[Override]
     public function sort(): int
     {
-        return 40;
+        return 20;
     }
 
     public function components(): array

@@ -15,6 +15,7 @@ enum ActivityLog: string
     case Authentication = 'authentication';
     case Settings = 'settings';
     case Backups = 'backups';
+    case Seo = 'seo';
 
     public function label(): string
     {

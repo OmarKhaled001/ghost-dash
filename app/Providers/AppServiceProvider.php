@@ -8,7 +8,9 @@ use App\Health\DiskSpaceCheck;
 use App\Models\Admin;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\SeoPage;
 use App\Models\User;
+use App\Services\MailService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -35,6 +37,13 @@ final class AppServiceProvider extends ServiceProvider
     {
         $this->configureActivityLogCauser();
         $this->registerTelescope();
+
+        // The Email settings tab, applied when the mailer is first needed
+        // rather than at boot: providers also boot for commands that run
+        // before there is a database to read settings from.
+        $this->app->resolving('mail.manager', function (): void {
+            resolve(MailService::class)->applySettings();
+        });
     }
 
     public function boot(): void
@@ -109,6 +118,7 @@ final class AppServiceProvider extends ServiceProvider
             'user' => User::class,
             'role' => Role::class,
             'permission' => Permission::class,
+            'seo_page' => SeoPage::class,
         ]);
     }
 

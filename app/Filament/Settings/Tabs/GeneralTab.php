@@ -97,6 +97,11 @@ final class GeneralTab extends SettingsTab
                         ->options(fn (): array => array_combine(DateTimeZone::listIdentifiers(), DateTimeZone::listIdentifiers()))
                         ->searchable()
                         ->required(),
+
+                    TextInput::make('contact_email')
+                        ->label(__('settings/general.fields.contact_email'))
+                        ->email()
+                        ->maxLength(255),
                 ]),
         ];
     }

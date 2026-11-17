@@ -60,6 +60,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | SEO
+    |--------------------------------------------------------------------------
+    |
+    | Site-wide SEO and SEO per page, both in the panel's SEO menu, plus the
+    | <x-seo> component and GET /api/v1/seo. Off until switched on with
+    | `php artisan dash:seo`, which sets GHOSTDASH_SEO=true.
+    |
+    */
+
+    'seo' => [
+        'enabled' => (bool) env('GHOSTDASH_SEO', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings tabs
     |--------------------------------------------------------------------------
     |

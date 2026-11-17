@@ -15,6 +15,7 @@ enum CustomPermission: string
     case ManageSettings = 'manage_settings';
     case ManageBackups = 'manage_backups';
     case ViewHealth = 'view_health';
+    case ManageSeo = 'manage_seo';
 
     /**
      * @return list<string>

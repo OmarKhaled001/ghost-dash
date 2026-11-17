@@ -20,6 +20,19 @@ beforeEach(fn () => $this->setUpInstaller());
 afterEach(fn () => $this->tearDownInstaller());
 
 describe('an unattended install', function (): void {
+    it('switches SEO on when asked, and leaves it off otherwise', function (): void {
+        config(['ghostdash.seo.enabled' => false]);
+
+        $this->artisan('dash:install', $this->installOptions())->assertSuccessful();
+
+        expect($this->envContents())->not->toContain('GHOSTDASH_SEO=true');
+
+        $this->artisan('dash:install', $this->installOptions(['--seo' => true]))->assertSuccessful();
+
+        expect($this->envContents())->toContain('GHOSTDASH_SEO=true')
+            ->and(config('ghostdash.seo.enabled'))->toBeTrue();
+    });
+
     it('goes from nothing to a working application', function (): void {
         expect(File::exists($this->scratch.'/.env'))->toBeFalse()
             ->and($this->databaseExists($this->database))->toBeFalse();

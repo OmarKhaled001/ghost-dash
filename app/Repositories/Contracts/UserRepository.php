@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
+use App\Enums\SocialProvider;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -29,4 +30,8 @@ interface UserRepository
     public function update(User $user, array $attributes): User;
 
     public function delete(User $user): void;
+
+    public function findBySocialAccount(SocialProvider $provider, string $providerUserId): ?User;
+
+    public function linkSocialAccount(User $user, SocialProvider $provider, string $providerUserId): void;
 }

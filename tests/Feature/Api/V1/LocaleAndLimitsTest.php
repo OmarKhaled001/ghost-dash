@@ -112,7 +112,7 @@ describe('rate limiters', function (): void {
         $routes = collect(Route::getRoutes()->getRoutes())
             ->filter(fn (RoutingRoute $route): bool => str_starts_with($route->uri(), 'api/v1/auth/'));
 
-        expect($routes)->toHaveCount(10);
+        expect($routes)->toHaveCount(11);
 
         $limiters = $routes->map(function (RoutingRoute $route): string {
             $throttle = collect($route->gatherMiddleware())->first(fn (string $middleware): bool => str_starts_with($middleware, 'throttle:'));
@@ -122,8 +122,8 @@ describe('rate limiters', function (): void {
             return str_replace('throttle:', '', (string) $throttle);
         });
 
-        // Ten routes, ten different limiters, all of them defined.
-        expect($limiters->unique())->toHaveCount(10);
+        // One limiter per route, all of them defined.
+        expect($limiters->unique())->toHaveCount(11);
 
         $limiters->each(fn (string $name) => expect(RateLimiter::limiter($name))->not->toBeNull("limiter [{$name}] is not defined"));
     });

@@ -7,6 +7,7 @@ return [
     'messages' => [
         'ok' => 'OK.',
         'registered' => 'Your account has been created. Check your inbox to verify your email address.',
+        'social_registered' => 'Your account has been created.',
         'logged_in' => 'Signed in.',
         'logged_out' => 'Signed out.',
         'logged_out_everywhere' => 'Signed out on every device.',
@@ -16,6 +17,12 @@ return [
         'email_verified' => 'Your email address has been verified.',
         'email_already_verified' => 'Your email address is already verified.',
         'verification_link_sent' => 'A new verification link has been sent to your email address.',
+    ],
+
+    'social' => [
+        'invalid_token' => 'The provider did not accept this access token.',
+        'no_email' => 'The provider did not share an email address. Allow access to your email address and try again.',
+        'email_taken' => 'An account with this email address already exists. Sign in with your password.',
     ],
 
     'errors' => [
